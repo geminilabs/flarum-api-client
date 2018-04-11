@@ -8,11 +8,11 @@ use Flagrow\Flarum\Api\Flarum;
 class Fluent
 {
 	const METHODS = [
-		'get', 'head', 'post', 'put', 'patch', 'delete',
+		'delete', 'get', 'head', 'patch', 'post', 'put',
 	];
 
 	const METHODS_REQUIRING_AUTHENTICATION = [
-		'post', 'put', 'patch', 'delete',
+		'delete', 'patch', 'post', 'put',
 	];
 
 	const PAGINATION = [
@@ -20,8 +20,7 @@ class Fluent
 	];
 
 	const TYPES = [
-		'discussions',
-		'users',
+		'discussions', 'users',
 	];
 
 	/**

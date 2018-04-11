@@ -7,10 +7,9 @@ use Flagrow\Flarum\Api\Fluent;
 use Flagrow\Flarum\Api\Resource\Collection;
 use Flagrow\Flarum\Api\Resource\Item;
 use Flagrow\Flarum\Api\Response\Factory;
-use GuzzleHttp\Client as Guzzle;
+use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Support\Arr;
-use Psr\Http\Message\ResponseInterface;
 
 class Flarum
 {
@@ -20,9 +19,9 @@ class Flarum
 	protected static $cache;
 
 	/**
-	 * @var bool
+	 * @var GuzzleClient
 	 */
-	protected $authorized = false;
+	protected $client;
 
 	/**
 	 * @var Fluent
@@ -30,27 +29,34 @@ class Flarum
 	protected $fluent;
 
 	/**
-	 * @var Guzzle
-	 */
-	protected $guzzle;
-
-	/**
-	 * Whether to enforce specific markup/variables setting.
 	 * @var bool
 	 */
-	protected $strict = true;
+	protected $isAuthorized = false;
 
 	/**
-	 * @param $host Full FQDN hostname to your Flarum forum, eg http://example.com/forum
-	 * @param array $authorization Holding either "token" or "identification" and "password" as keys.
+	 * @var bool
+	 */
+	protected $isStrict = true;
+
+	/**
+	 * @return Cache
+	 */
+	public static function getCache(): Cache
+	{
+		return static::$cache;
+	}
+
+	/**
+	 * @param string $host Full FQDN hostname to your Flarum forum, eg http://example.com/forum
+	 * @param array $authorization Holding "token" and "userid" as keys.
 	 */
 	public function __construct( string $host, array $authorization = [] )
 	{
-		$this->guzzle = new Guzzle([
+		$this->client = new GuzzleClient([
 			'base_uri' => rtrim( $host, '/' ).'/api/',
-			'headers' => $this->requestHeaders( $authorization )
+			'headers' => $this->getRequestHeaders( $authorization ),
 		]);
-		$this->fluent();
+		$this->setFluent();
 		static::$cache = new Cache( new ArrayStore );
 	}
 
@@ -60,14 +66,6 @@ class Flarum
 	public function __call( string $name, array $arguments = [] )
 	{
 		return call_user_func_array( [$this->fluent, $name], $arguments );
-	}
-
-	/**
-	 * @return Cache
-	 */
-	public static function getCache(): Cache
-	{
-		return self::$cache;
 	}
 
 	/**
@@ -83,15 +81,16 @@ class Flarum
 	 */
 	public function isAuthorized(): bool
 	{
-		return $this->authorized;
+		return $this->isAuthorized;
 	}
 
 	/**
+	 * Whether to enforce specific markup/variables setting.
 	 * @return bool
 	 */
 	public function isStrict(): bool
 	{
-		return $this->strict;
+		return $this->isStrict;
 	}
 
 	/**
@@ -100,12 +99,12 @@ class Flarum
 	public function request()
 	{
 		$method = $this->fluent->getMethod();
-		$response = call_user_func( [$this->guzzle, $method],
+		$response = call_user_func( [$this->client, $method],
 			(string)$this->fluent,
 			$this->getVariablesForMethod()
 		);
 		if( $response->getStatusCode() >= 200 && $response->getStatusCode() < 300 ) {
-			$this->resetFluent();
+			$this->setFluent();
 			return Factory::build( $response );
 		}
 	}
@@ -113,10 +112,27 @@ class Flarum
 	/**
 	 * @return Flarum
 	 */
-	public function setStrict( bool $strict ): Flarum
+	public function setStrict( bool $isStrict ): Flarum
 	{
-		$this->strict = $strict;
+		$this->isStrict = $isStrict;
 		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getRequestHeaders( array $authorization = [] ): array
+	{
+		$authorization += ['token' => '', 'userid' => 1];
+		$headers = [
+			'Accept' => 'application/vnd.api+json, application/json',
+			'User-Agent' => 'Flagrow Api Client',
+		];
+		if( $token = $authorization['token'] ) {
+			$headers['Authorization'] = 'Token '.$token.';userId='.$authorization['userid'];
+			$this->isAuthorized = true;
+		}
+		return $headers;
 	}
 
 	/**
@@ -133,25 +149,9 @@ class Flarum
 	}
 
 	/**
-	 * @return array
-	 */
-	protected function requestHeaders( array $authorization = [] ): array
-	{
-		$headers = [
-			'Accept' => 'application/vnd.api+json, application/json',
-			'User-Agent' => 'Flagrow Api Client'
-		];
-		if( $token = Arr::get( $authorization, 'token' )) {
-			$this->authorized = true;
-			Arr::set( $headers, 'Authorization', "Token $token" );
-		}
-		return $headers;
-	}
-
-	/**
 	 * @return Flarum
 	 */
-	protected function resetFluent(): Flarum
+	protected function setFluent(): Flarum
 	{
 		$this->fluent = new Fluent( $this );
 		return $this;

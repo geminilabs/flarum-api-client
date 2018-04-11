@@ -47,7 +47,7 @@ abstract class Model
 	 */
 	public static function getDispatcher(): Flarum
 	{
-		return self::$dispatcher;
+		return static::$dispatcher;
 	}
 
 	/**
@@ -55,7 +55,7 @@ abstract class Model
 	 */
 	public static function setDispatcher( Flarum $flarum )
 	{
-		self::$dispatcher = $flarum;
+		static::$dispatcher = $flarum;
 	}
 
 	public function __construct( array $attributes = [] )
@@ -117,7 +117,6 @@ abstract class Model
 		}
 		throw new InvalidArgumentException( 'Resource doesn\'t exist.' );
 	}
-
 
 	/**
 	 * @return Item

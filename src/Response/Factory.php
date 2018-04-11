@@ -17,8 +17,7 @@ class Factory
 		if( $response->getStatusCode() === 204 ) {
 			return true;
 		}
-		$body = $response->getBody();
-		if( empty( $body )) {
+		if( empty( $body = $response->getBody() )) {
 			return null;
 		}
 		$json = json_decode( $body, true );

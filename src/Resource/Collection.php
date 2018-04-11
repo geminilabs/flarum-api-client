@@ -42,7 +42,7 @@ class Collection extends Resource
 	 * @param int|null $amount
 	 * @return IlluminateCollection
 	 */
-	public function latest( string $by = 'created_at', int $amount = null ): IlluminateCollection
+	public function latest( string $by = 'created_at', $amount = null ): IlluminateCollection
 	{
 		$collection = $this->collect()->sortBy( $by );
 		if( $amount ) {
