@@ -14,24 +14,19 @@ class Flarum
      * @var Guzzle
      */
     protected $rest;
-
     /**
      * @var Fluent
      */
     protected $fluent;
-
     /**
      * @var bool
      */
     protected $authorized = false;
-
     /**
      * Whether to enforce specific markup/variables setting.
-     *
      * @var bool
      */
     protected $strict = true;
-
     /**
      * @var Cache
      */
@@ -39,18 +34,18 @@ class Flarum
 
     /**
      * Flarum constructor.
-     * @param $host Full FQDN hostname to your Flarum forum, eg http://example.com/forum
+     * @param       $host          Full FQDN hostname to your Flarum forum, eg http://example.com/forum
      * @param array $authorization Holding either "token" or "username" and "password" as keys.
      */
-    public function __construct($host, array $authorization = [])
+    public function __construct( $host, array $authorization = [] )
     {
-        $this->rest = new Guzzle([
-            'base_uri' => "$host/api/",
-            'headers' => $this->requestHeaders($authorization)
-        ]);
-
+        $this->rest = new Guzzle( [
+                'base_uri' => "$host/api/",
+                'headers' => $this->requestHeaders( $authorization )
+            ]
+        );
         $this->fluent();
-        static::$cache = new Cache(new ArrayStore);
+        static::$cache = new Cache( new ArrayStore );
     }
 
     /**
@@ -58,8 +53,7 @@ class Flarum
      */
     protected function fluent(): Flarum
     {
-        $this->fluent = new Fluent($this);
-
+        $this->fluent = new Fluent( $this );
         return $this;
     }
 
@@ -77,15 +71,12 @@ class Flarum
     public function request()
     {
         $method = $this->fluent->getMethod();
-
         /** @var ResponseInterface $response */
-        $response = $this->rest->{$method}((string)$this->fluent, $this->getVariablesForMethod());
-
-        if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+        $response = $this->rest->{$method}( (string)$this->fluent, $this->getVariablesForMethod() );
+        if( $response->getStatusCode() >= 200 && $response->getStatusCode() < 300 ) {
             // Reset the fluent builder for a new request.
             $this->fluent();
-
-            return Factory::build($response);
+            return Factory::build( $response );
         }
     }
 
@@ -93,29 +84,26 @@ class Flarum
      * @param array $authorization
      * @return array
      */
-    protected function requestHeaders(array $authorization = [])
+    protected function requestHeaders( array $authorization = [] )
     {
         $headers = [
             'Accept' => 'application/vnd.api+json, application/json',
             'User-Agent' => 'Flagrow Api Client'
         ];
-
-        $token = Arr::get($authorization, 'token');
-
-        if ($token) {
+        $token = Arr::get( $authorization, 'token' );
+        if( $token ) {
             $this->authorized = true;
-            Arr::set($headers, 'Authorization', "Token $token");
+            Arr::set( $headers, 'Authorization', "Token $token" );
         }
-
         return $headers;
     }
 
     /**
      * {@inheritdoc}
      */
-    function __call($name, $arguments)
+    function __call( $name, $arguments )
     {
-        return call_user_func_array([$this->fluent, $name], $arguments);
+        return call_user_func_array( [ $this->fluent, $name ], $arguments );
     }
 
     /**
@@ -124,18 +112,16 @@ class Flarum
     protected function getVariablesForMethod(): array
     {
         $variables = $this->fluent->getVariables();
-
-        if (empty($variables)) {
+        if( empty( $variables ) ) {
             return [];
         }
-
-        switch ($this->fluent->getMethod()) {
+        switch( $this->fluent->getMethod() ) {
             case 'get':
                 return $variables;
                 break;
             default:
                 return [
-                    'json' => ['data' => $variables]
+                    'json' => [ 'data' => $variables ]
                 ];
         }
     }
@@ -152,7 +138,7 @@ class Flarum
      * @param bool $strict
      * @return Flarum
      */
-    public function setStrict(bool $strict): Flarum
+    public function setStrict( bool $strict ): Flarum
     {
         $this->strict = $strict;
         return $this;

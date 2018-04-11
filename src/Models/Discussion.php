@@ -2,7 +2,4 @@
 
 namespace Flagrow\Flarum\Api\Models;
 
-class Discussion extends Model
-{
-
-}
+class Discussion extends Model {}

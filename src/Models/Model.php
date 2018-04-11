@@ -24,36 +24,31 @@ abstract class Model
      */
     protected $attributes = [];
 
-    public function __construct(array $attributes = [])
+    public function __construct( array $attributes = [] )
     {
-        if (Arr::has($attributes, 'id')) {
-            $this->id = Arr::pluck($attributes, 'id');
+        if( Arr::has( $attributes, 'id' ) ) {
+            $this->id = Arr::pluck( $attributes, 'id' );
         }
-
         $this->attributes = $attributes;
     }
 
-    public static function fromResource(Item $item)
+    public static function fromResource( Item $item )
     {
-        $class = sprintf("%s\\%s", __NAMESPACE__, Str::camel(Str::singular($item->type)));
-
-        if (class_exists($class)) {
-            $response = new $class($item->attributes);
-
-            if ($item->id) {
+        $class = sprintf( "%s\\%s", __NAMESPACE__, Str::camel( Str::singular( $item->type ) ) );
+        if( class_exists( $class ) ) {
+            $response = new $class( $item->attributes );
+            if( $item->id ) {
                 $response->id = $item->id;
             }
-
             return $response;
         }
-
-        throw new InvalidArgumentException("Resource type {$item->type} could not be migrated to Model");
+        throw new InvalidArgumentException( "Resource type {$item->type} could not be migrated to Model" );
     }
 
     /**
      * @param Flarum $dispatcher
      */
-    public static function setDispatcher(Flarum $dispatcher)
+    public static function setDispatcher( Flarum $dispatcher )
     {
         self::$dispatcher = $dispatcher;
     }
@@ -68,27 +63,27 @@ abstract class Model
 
     /**
      * Resource type.
-     *
      * @return string
      */
     public function type(): string
     {
-        return Str::plural(Str::lower(
-            Str::replaceFirst(__NAMESPACE__ . '\\', '', static::class)
-        ));
+        return Str::plural( Str::lower(
+            Str::replaceFirst( __NAMESPACE__.'\\', '', static::class )
+        )
+        );
     }
 
     /**
      * Generated resource item.
-     *
      * @return Item
      */
     public function item(): Item
     {
-        return new Item([
-            'type' => $this->type(),
-            'attributes' => $this->attributes
-        ]);
+        return new Item( [
+                'type' => $this->type(),
+                'attributes' => $this->attributes
+            ]
+        );
     }
 
     /**
@@ -102,7 +97,7 @@ abstract class Model
     /**
      * @param Model $relation
      */
-    public function addRelation($relation)
+    public function addRelation( $relation )
     {
 
     }
@@ -113,16 +108,16 @@ abstract class Model
     public function baseRequest(): Fluent
     {
         // Set resource type.
-        $dispatch = call_user_func_array([
+        $dispatch = call_user_func_array( [
             static::$dispatcher,
             $this->type()
-        ], []);
-
+        ],
+            []
+        );
         // Set resource Id.
-        if ($this->id) {
-            $dispatch->id($this->id);
+        if( $this->id ) {
+            $dispatch->id( $this->id );
         }
-
         return $dispatch;
     }
 
@@ -131,16 +126,14 @@ abstract class Model
      */
     public function delete()
     {
-        if (!$this->id) {
-            throw new InvalidArgumentException("Resource doesn't exist.");
+        if( !$this->id ) {
+            throw new InvalidArgumentException( "Resource doesn't exist." );
         }
-
         return $this->baseRequest()->delete()->request();
     }
 
     /**
      * Creates or updates a resource.
-     *
      * @return mixed
      */
     public function save()
@@ -157,11 +150,12 @@ abstract class Model
     /**
      * {@inheritdoc}
      */
-    function __set($name, $value)
+    function __set( $name, $value )
     {
-        if ($name === 'id') {
+        if( $name === 'id' ) {
             $this->id = $value;
-        } else {
+        }
+        else {
             $this->attributes[$name] = $value;
         }
     }
@@ -169,8 +163,8 @@ abstract class Model
     /**
      * {@inheritdoc}
      */
-    function __get($name)
+    function __get( $name )
     {
-        return Arr::get($this->attributes, $name);
+        return Arr::get( $this->attributes, $name );
     }
 }

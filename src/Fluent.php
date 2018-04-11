@@ -15,23 +15,26 @@ class Fluent
     ];
 
     protected $methods = [
-        'get', 'head',
-        'post', 'put', 'patch',
-        'delete'
+        'get',
+        'head',
+        'post',
+        'put',
+        'patch',
+        'delete',
     ];
-
     protected $methodsRequiringAuthorization = [
-        'post', 'put', 'patch', 'delete'
+        'post',
+        'put',
+        'patch',
+        'delete',
     ];
-
     /**
      * @var array
      */
     protected $pagination = [
         'filter',
-        'page'
+        'page',
     ];
-
     /**
      * @var array
      */
@@ -62,7 +65,7 @@ class Fluent
      */
     protected $variables = [];
 
-    public function __construct(Flarum $flarum)
+    public function __construct( Flarum $flarum )
     {
         $this->flarum = $flarum;
     }
@@ -71,10 +74,9 @@ class Fluent
      * @param string $type
      * @return Fluent
      */
-    protected function handleType(string $type): Fluent
+    protected function handleType( string $type ): Fluent
     {
         $this->segments[] = $type;
-
         return $this;
     }
 
@@ -83,17 +85,15 @@ class Fluent
      * @return Fluent
      * @throws UnauthorizedRequestMethodException
      */
-    public function setMethod(string $method): Fluent
+    public function setMethod( string $method ): Fluent
     {
-        $this->method = strtolower($method);
-
-        if (
+        $this->method = strtolower( $method );
+        if(
             $this->flarum->isStrict() &&
             !$this->flarum->isAuthorized() &&
-            in_array($this->method, $this->methodsRequiringAuthorization)) {
-            throw new UnauthorizedRequestMethodException($this->method);
+            in_array( $this->method, $this->methodsRequiringAuthorization ) ) {
+            throw new UnauthorizedRequestMethodException( $this->method );
         }
-
         return $this;
     }
 
@@ -101,14 +101,14 @@ class Fluent
      * @param array $variables
      * @return $this
      */
-    public function setVariables(array $variables = [])
+    public function setVariables( array $variables = [] )
     {
-        if (count($variables) === 1 && is_array($variables[0])) {
+        if( count( $variables ) === 1 && is_array( $variables[0] ) ) {
             $this->variables = $variables[0];
-        } else {
+        }
+        else {
             $this->variables = $variables;
         }
-
         return $this;
     }
 
@@ -130,13 +130,12 @@ class Fluent
 
     /**
      * @param string $type
-     * @param $value
+     * @param        $value
      * @return $this
      */
-    protected function handlePagination(string $type, $value)
+    protected function handlePagination( string $type, $value )
     {
         $this->query[$type] = $value;
-
         return $this;
     }
 
@@ -144,10 +143,9 @@ class Fluent
      * @param $id
      * @return Fluent
      */
-    public function id(int $id): Fluent
+    public function id( int $id ): Fluent
     {
         $this->segments[] = $id;
-
         return $this;
     }
 
@@ -155,10 +153,9 @@ class Fluent
      * @param string $include
      * @return Fluent
      */
-    public function include(string $include): Fluent
+    public function include( string $include ): Fluent
     {
         $this->includes[] = $include;
-
         return $this;
     }
 
@@ -166,9 +163,9 @@ class Fluent
      * @param int $number
      * @return Fluent
      */
-    public function offset(int $number): Fluent
+    public function offset( int $number ): Fluent
     {
-        return $this->handlePagination('page[offset]', $number);
+        return $this->handlePagination( 'page[offset]', $number );
     }
 
     /**
@@ -176,23 +173,19 @@ class Fluent
      */
     function __toString()
     {
-        $path = implode('/', $this->segments);
-
-        if ($this->includes || $this->query) {
+        $path = implode( '/', $this->segments );
+        if( $this->includes || $this->query ) {
             $path .= '?';
         }
-
-        if ($this->includes) {
+        if( $this->includes ) {
             $path .= sprintf(
                 'include=%s&',
-                implode(',', $this->includes)
+                implode( ',', $this->includes )
             );
         }
-
-        if ($this->query) {
-            $path .= http_build_query($this->query);
+        if( $this->query ) {
+            $path .= http_build_query( $this->query );
         }
-
         return $path;
     }
 
@@ -201,25 +194,22 @@ class Fluent
      * @param $arguments
      * @return Fluent
      */
-    function __call($name, $arguments)
+    function __call( $name, $arguments )
     {
-        if (in_array($name, $this->methods)) {
-            if (!empty($arguments)) {
-                $this->setVariables($arguments);
+        if( in_array( $name, $this->methods ) ) {
+            if( !empty( $arguments ) ) {
+                $this->setVariables( $arguments );
             }
-            return $this->setMethod($name, $arguments);
+            return $this->setMethod( $name, $arguments );
         }
-
-        if (count($arguments) === 0 && in_array($name, $this->types)) {
-            return $this->handleType($name);
+        if( count( $arguments ) === 0 && in_array( $name, $this->types ) ) {
+            return $this->handleType( $name );
         }
-
-        if (in_array($name, $this->pagination) && count($arguments) === 1) {
-            return call_user_func_array([$this, 'handlePagination'], array_prepend($arguments, $name));
+        if( in_array( $name, $this->pagination ) && count( $arguments ) === 1 ) {
+            return call_user_func_array( [ $this, 'handlePagination' ], array_prepend( $arguments, $name ) );
         }
-
-        if (method_exists($this->flarum, $name)) {
-            return call_user_func_array([$this->flarum, $name], $arguments);
+        if( method_exists( $this->flarum, $name ) ) {
+            return call_user_func_array( [ $this->flarum, $name ], $arguments );
         }
     }
 }

@@ -11,27 +11,22 @@ class Cache
      * @var Store
      */
     protected $store;
-
     /**
      * @var array|Store[]
      */
     protected $stores = [];
-
     /**
      * Current active store.
-     *
      * @var string
      */
     protected $active;
-
     /**
      * Time in minutes to cache the stored values.
-     *
      * @var int
      */
     protected $duration = 60;
 
-    public function __construct(Store $store)
+    public function __construct( Store $store )
     {
         $this->store = $store;
     }
@@ -40,10 +35,9 @@ class Cache
      * @param string $type
      * @return Cache
      */
-    public function setActive(string $type): Cache
+    public function setActive( string $type ): Cache
     {
         $this->active = $type;
-
         return $this;
     }
 
@@ -59,14 +53,12 @@ class Cache
      * @param string|null $store
      * @return Store
      */
-    public function getStore(string $store = null): Store
+    public function getStore( string $store = null ): Store
     {
         $store = $store ?? $this->active;
-
-        if (!array_key_exists($store, $this->stores)) {
+        if( !array_key_exists( $store, $this->stores ) ) {
             $this->stores[$store] = clone $this->store;
         }
-
         return $this->stores[$store];
     }
 
@@ -76,10 +68,9 @@ class Cache
      * @param string|null $type
      * @return Cache
      */
-    public function set(int $id, Item $item, string $type = null): Cache
+    public function set( int $id, Item $item, string $type = null ): Cache
     {
-        $this->getStore($type)->put($id, $item, $this->duration);
-
+        $this->getStore( $type )->put( $id, $item, $this->duration );
         return $this;
     }
 
@@ -89,10 +80,9 @@ class Cache
      * @param string|null $type
      * @return mixed
      */
-    public function get(int $id, $default = null, string $type = null)
+    public function get( int $id, $default = null, string $type = null )
     {
-        $value = $this->getStore($type)->get($id);
-
+        $value = $this->getStore( $type )->get( $id );
         return $value ?: $default;
     }
 
@@ -100,8 +90,8 @@ class Cache
      * @param string|null $type
      * @return mixed
      */
-    public function all(string $type = null)
+    public function all( string $type = null )
     {
-        return $this->getStore($type)->all();
+        return $this->getStore( $type )->all();
     }
 }

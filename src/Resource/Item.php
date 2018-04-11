@@ -13,37 +13,33 @@ class Item extends Resource
      * @var string
      */
     public $type;
-
     /**
      * @var int
      */
     public $id;
-
     /**
      * @var array
      */
     public $attributes = [];
 
-    public function __construct(array $item = [])
+    public function __construct( array $item = [] )
     {
-        $this->id = (int) Arr::get($item, 'id');
-        $this->type = Arr::get($item, 'type');
-        $this->attributes = Arr::get($item, 'attributes', []);
-
-        $this->relations(Arr::get($item, 'relationships', []));
+        $this->id = (int)Arr::get( $item, 'id' );
+        $this->type = Arr::get( $item, 'type' );
+        $this->attributes = Arr::get( $item, 'attributes', [] );
+        $this->relations( Arr::get( $item, 'relationships', [] ) );
     }
 
     /**
      * {@inheritdoc}
      */
-    function __get($name)
+    function __get( $name )
     {
-        if (Arr::has($this->attributes, $name)) {
-            return Arr::get($this->attributes, $name);
+        if( Arr::has( $this->attributes, $name ) ) {
+            return Arr::get( $this->attributes, $name );
         }
-
-        if (Arr::has($this->relationships, $name)) {
-            return Arr::get($this->relationships, $name);
+        if( Arr::has( $this->relationships, $name ) ) {
+            return Arr::get( $this->relationships, $name );
         }
     }
 

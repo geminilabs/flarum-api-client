@@ -8,8 +8,6 @@ use Illuminate\Support\Arr;
 
 trait HasRelationships
 {
-
-
     /**
      * @var array
      */
@@ -18,24 +16,23 @@ trait HasRelationships
     /**
      * @param array $relations
      */
-    protected function relations(array $relations = [])
+    protected function relations( array $relations = [] )
     {
-        foreach ($relations as $attribute => $relation) {
-            $data = Arr::get($relation, 'data');
-
+        foreach( $relations as $attribute => $relation ) {
+            $data = Arr::get( $relation, 'data' );
             // Single item.
-            if (Arr::get($data, 'type')) {
+            if( Arr::get( $data, 'type' ) ) {
                 $this->relationships[$attribute] = $this->parseRelationshipItem(
-                    Arr::get($data, 'type'),
-                    Arr::get($data, 'id')
+                    Arr::get( $data, 'type' ),
+                    Arr::get( $data, 'id' )
                 );
-            } else {
+            }
+            else {
                 $this->relationships[$attribute] = [];
-
-                foreach ($data as $item) {
-                    $id = (int) Arr::get($item, 'id');
+                foreach( $data as $item ) {
+                    $id = (int)Arr::get( $item, 'id' );
                     $this->relationships[$attribute][$id] = $this->parseRelationshipItem(
-                        Arr::get($item, 'type'),
+                        Arr::get( $item, 'type' ),
                         $id
                     );
                 }
@@ -48,8 +45,8 @@ trait HasRelationships
      * @param int $id
      * @return Item|null
      */
-    protected function parseRelationshipItem(string $type, int $id)
+    protected function parseRelationshipItem( string $type, int $id )
     {
-        return Flarum::getCache()->get($id, null, $type);
+        return Flarum::getCache()->get( $id, null, $type );
     }
 }

@@ -15,14 +15,11 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     protected function setUp()
     {
         parent::setUp();
-
-        $token = getenv('FLARUM_TOKEN');
-
+        $token = getenv( 'FLARUM_TOKEN' );
         $this->flarum = new Flarum(
-            getenv('FLARUM_HOST') ?? 'https://discuss.flarum.org',
-            $token ? compact('token') : []
+            getenv( 'FLARUM_HOST' ) ?? 'https://discuss.flarum.org',
+            $token ? compact( 'token' ) : []
         );
-
-        Model::setDispatcher($this->flarum);
+        Model::setDispatcher( $this->flarum );
     }
 }

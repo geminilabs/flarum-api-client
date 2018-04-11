@@ -12,8 +12,7 @@ trait UsesCache
      */
     public function cache()
     {
-        Flarum::getCache()->set($this->id, $this, $this->type);
-
+        Flarum::getCache()->set( $this->id, $this, $this->type );
         return $this;
     }
 }

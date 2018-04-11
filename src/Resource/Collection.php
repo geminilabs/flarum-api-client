@@ -15,10 +15,10 @@ class Collection extends Resource
      * Collection constructor.
      * @param array $data
      */
-    public function __construct(array $data)
+    public function __construct( array $data )
     {
-        foreach ($data as $item) {
-            $item = new Item($item);
+        foreach( $data as $item ) {
+            $item = new Item( $item );
             $this->items[$item->id] = $item;
         }
     }
@@ -28,10 +28,9 @@ class Collection extends Resource
      */
     public function cache()
     {
-        foreach ($this->items as $id => $item) {
+        foreach( $this->items as $id => $item ) {
             $item->cache();
         }
-
         return $this;
     }
 
@@ -40,7 +39,7 @@ class Collection extends Resource
      */
     public function collect(): Collect
     {
-        return collect($this->items)->keyBy('id');
+        return collect( $this->items )->keyBy( 'id' );
     }
 
     /**
@@ -48,14 +47,12 @@ class Collection extends Resource
      * @param int|null $amount
      * @return Collect
      */
-    public function latest(string $by = 'created_at', int $amount = null): Collect
+    public function latest( string $by = 'created_at', int $amount = null ): Collect
     {
-        $set = $this->collect()->sortBy($by);
-
-        if ($amount) {
-            $set = $set->splice(0, $amount);
+        $set = $this->collect()->sortBy( $by );
+        if( $amount ) {
+            $set = $set->splice( 0, $amount );
         }
-
         return $set;
     }
 }

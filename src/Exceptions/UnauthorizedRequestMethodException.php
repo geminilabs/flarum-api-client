@@ -2,6 +2,4 @@
 
 namespace Flagrow\Flarum\Api\Exceptions;
 
-class UnauthorizedRequestMethodException extends \Exception {
-
-}
+class UnauthorizedRequestMethodException extends \Exception {}
