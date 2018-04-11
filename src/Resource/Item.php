@@ -9,14 +9,17 @@ use Illuminate\Support\Arr;
 class Item extends Resource
 {
 	use HasRelationships, UsesCache;
+
 	/**
 	 * @var string
 	 */
 	public $type;
+
 	/**
 	 * @var int
 	 */
 	public $id;
+
 	/**
 	 * @var array
 	 */
@@ -27,7 +30,7 @@ class Item extends Resource
 		$this->id = (int)Arr::get( $item, 'id' );
 		$this->type = Arr::get( $item, 'type' );
 		$this->attributes = Arr::get( $item, 'attributes', [] );
-		$this->relations( Arr::get( $item, 'relationships', [] ) );
+		$this->relations( Arr::get( $item, 'relationships', [] ));
 	}
 
 	/**
@@ -35,10 +38,10 @@ class Item extends Resource
 	 */
 	function __get( $name )
 	{
-		if( Arr::has( $this->attributes, $name ) ) {
+		if( Arr::has( $this->attributes, $name )) {
 			return Arr::get( $this->attributes, $name );
 		}
-		if( Arr::has( $this->relationships, $name ) ) {
+		if( Arr::has( $this->relationships, $name )) {
 			return Arr::get( $this->relationships, $name );
 		}
 	}

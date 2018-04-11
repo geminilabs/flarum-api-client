@@ -11,26 +11,38 @@ use Psr\Http\Message\ResponseInterface;
 class Flarum
 {
 	/**
-	 * @var Guzzle
+	 * @var Cache
 	 */
-	protected $rest;
-	/**
-	 * @var Fluent
-	 */
-	protected $fluent;
+	protected static $cache;
+
 	/**
 	 * @var bool
 	 */
 	protected $authorized = false;
+
+	/**
+	 * @var Fluent
+	 */
+	protected $fluent;
+
+	/**
+	 * @var Guzzle
+	 */
+	protected $rest;
+
 	/**
 	 * Whether to enforce specific markup/variables setting.
 	 * @var bool
 	 */
 	protected $strict = true;
+
 	/**
-	 * @var Cache
+	 * @return Cache
 	 */
-	protected static $cache;
+	public static function getCache(): Cache
+	{
+		return self::$cache;
+	}
 
 	/**
 	 * Flarum constructor.
@@ -49,20 +61,35 @@ class Flarum
 	}
 
 	/**
-	 * @return Flarum
+	 * {@inheritdoc}
 	 */
-	protected function fluent(): Flarum
+	public function __call( $name, $arguments )
 	{
-		$this->fluent = new Fluent( $this );
-		return $this;
+		return call_user_func_array( [$this->fluent, $name], $arguments );
 	}
 
 	/**
-	 * @return Cache
+	 * @return Fluent
 	 */
-	public static function getCache(): Cache
+	public function getFluent(): Fluent
 	{
-		return self::$cache;
+		return $this->fluent;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isAuthorized(): bool
+	{
+		return $this->authorized;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isStrict(): bool
+	{
+		return $this->strict;
 	}
 
 	/**
@@ -77,6 +104,45 @@ class Flarum
 			// Reset the fluent builder for a new request.
 			$this->fluent();
 			return Factory::build( $response );
+		}
+	}
+
+	/**
+	 * @param bool $strict
+	 * @return Flarum
+	 */
+	public function setStrict( bool $strict ): Flarum
+	{
+		$this->strict = $strict;
+		return $this;
+	}
+
+	/**
+	 * @return Flarum
+	 */
+	protected function fluent(): Flarum
+	{
+		$this->fluent = new Fluent( $this );
+		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getVariablesForMethod(): array
+	{
+		$variables = $this->fluent->getVariables();
+		if( empty( $variables )) {
+			return [];
+		}
+		switch( $this->fluent->getMethod() ) {
+			case 'get':
+				return $variables;
+				break;
+			default:
+				return [
+					'json' => ['data' => $variables]
+				];
 		}
 	}
 
@@ -96,67 +162,5 @@ class Flarum
 			Arr::set( $headers, 'Authorization', "Token $token" );
 		}
 		return $headers;
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	function __call( $name, $arguments )
-	{
-		return call_user_func_array( [ $this->fluent, $name ], $arguments );
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getVariablesForMethod(): array
-	{
-		$variables = $this->fluent->getVariables();
-		if( empty( $variables ) ) {
-			return [];
-		}
-		switch( $this->fluent->getMethod() ) {
-			case 'get':
-				return $variables;
-				break;
-			default:
-				return [
-					'json' => [ 'data' => $variables ]
-				];
-		}
-	}
-
-	/**
-	 * @return Fluent
-	 */
-	public function getFluent(): Fluent
-	{
-		return $this->fluent;
-	}
-
-	/**
-	 * @param bool $strict
-	 * @return Flarum
-	 */
-	public function setStrict( bool $strict ): Flarum
-	{
-		$this->strict = $strict;
-		return $this;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isStrict(): bool
-	{
-		return $this->strict;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isAuthorized(): bool
-	{
-		return $this->authorized;
 	}
 }

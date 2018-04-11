@@ -8,23 +8,26 @@ use Illuminate\Contracts\Cache\Store;
 class Cache
 {
 	/**
-	 * @var Store
-	 */
-	protected $store;
-	/**
-	 * @var array|Store[]
-	 */
-	protected $stores = [];
-	/**
 	 * Current active store.
 	 * @var string
 	 */
 	protected $active;
+
 	/**
 	 * Time in minutes to cache the stored values.
 	 * @var int
 	 */
 	protected $duration = 60;
+
+	/**
+	 * @var Store
+	 */
+	protected $store;
+
+	/**
+	 * @var array|Store[]
+	 */
+	protected $stores = [];
 
 	public function __construct( Store $store )
 	{
@@ -32,13 +35,24 @@ class Cache
 	}
 
 	/**
-	 * @param string $type
-	 * @return Cache
+	 * @param string|null $type
+	 * @return mixed
 	 */
-	public function setActive( string $type ): Cache
+	public function all( string $type = null )
 	{
-		$this->active = $type;
-		return $this;
+		return $this->getStore( $type )->all();
+	}
+
+	/**
+	 * @param int $id
+	 * @param null $default
+	 * @param string|null $type
+	 * @return mixed
+	 */
+	public function get( int $id, $default = null, string $type = null )
+	{
+		$value = $this->getStore( $type )->get( $id );
+		return $value ?: $default;
 	}
 
 	/**
@@ -56,7 +70,7 @@ class Cache
 	public function getStore( string $store = null ): Store
 	{
 		$store = $store ?? $this->active;
-		if( !array_key_exists( $store, $this->stores ) ) {
+		if( !array_key_exists( $store, $this->stores )) {
 			$this->stores[$store] = clone $this->store;
 		}
 		return $this->stores[$store];
@@ -75,23 +89,12 @@ class Cache
 	}
 
 	/**
-	 * @param int $id
-	 * @param null $default
-	 * @param string|null $type
-	 * @return mixed
+	 * @param string $type
+	 * @return Cache
 	 */
-	public function get( int $id, $default = null, string $type = null )
+	public function setActive( string $type ): Cache
 	{
-		$value = $this->getStore( $type )->get( $id );
-		return $value ?: $default;
-	}
-
-	/**
-	 * @param string|null $type
-	 * @return mixed
-	 */
-	public function all( string $type = null )
-	{
-		return $this->getStore( $type )->all();
+		$this->active = $type;
+		return $this;
 	}
 }

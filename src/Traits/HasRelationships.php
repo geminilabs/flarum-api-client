@@ -14,6 +14,16 @@ trait HasRelationships
 	public $relationships = [];
 
 	/**
+	 * @param string $type
+	 * @param int $id
+	 * @return Item|null
+	 */
+	protected function parseRelationshipItem( string $type, int $id )
+	{
+		return Flarum::getCache()->get( $id, null, $type );
+	}
+
+	/**
 	 * @param array $relations
 	 */
 	protected function relations( array $relations = [] )
@@ -21,7 +31,7 @@ trait HasRelationships
 		foreach( $relations as $attribute => $relation ) {
 			$data = Arr::get( $relation, 'data' );
 			// Single item.
-			if( Arr::get( $data, 'type' ) ) {
+			if( Arr::get( $data, 'type' )) {
 				$this->relationships[$attribute] = $this->parseRelationshipItem(
 					Arr::get( $data, 'type' ),
 					Arr::get( $data, 'id' )
@@ -38,15 +48,5 @@ trait HasRelationships
 				}
 			}
 		}
-	}
-
-	/**
-	 * @param string $type
-	 * @param int $id
-	 * @return Item|null
-	 */
-	protected function parseRelationshipItem( string $type, int $id )
-	{
-		return Flarum::getCache()->get( $id, null, $type );
 	}
 }

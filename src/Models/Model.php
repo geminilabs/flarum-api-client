@@ -15,27 +15,21 @@ abstract class Model
 	 * @var Flarum
 	 */
 	protected static $dispatcher;
-	/**
-	 * @var int|null
-	 */
-	protected $id;
+
 	/**
 	 * @var array
 	 */
 	protected $attributes = [];
 
-	public function __construct( array $attributes = [] )
-	{
-		if( Arr::has( $attributes, 'id' ) ) {
-			$this->id = Arr::pluck( $attributes, 'id' );
-		}
-		$this->attributes = $attributes;
-	}
+	/**
+	 * @var int|null
+	 */
+	protected $id;
 
 	public static function fromResource( Item $item )
 	{
-		$class = sprintf( "%s\\%s", __NAMESPACE__, Str::camel( Str::singular( $item->type ) ) );
-		if( class_exists( $class ) ) {
+		$class = sprintf( "%s\\%s", __NAMESPACE__, Str::camel( Str::singular( $item->type )));
+		if( class_exists( $class )) {
 			$response = new $class( $item->attributes );
 			if( $item->id ) {
 				$response->id = $item->id;
@@ -43,14 +37,6 @@ abstract class Model
 			return $response;
 		}
 		throw new InvalidArgumentException( "Resource type {$item->type} could not be migrated to Model" );
-	}
-
-	/**
-	 * @param Flarum $dispatcher
-	 */
-	public static function setDispatcher( Flarum $dispatcher )
-	{
-		self::$dispatcher = $dispatcher;
 	}
 
 	/**
@@ -62,28 +48,47 @@ abstract class Model
 	}
 
 	/**
-	 * Resource type.
-	 * @return string
+	 * @param Flarum $dispatcher
 	 */
-	public function type(): string
+	public static function setDispatcher( Flarum $dispatcher )
 	{
-		return Str::plural( Str::lower(
-			Str::replaceFirst( __NAMESPACE__.'\\', '', static::class )
-		)
-		);
+		self::$dispatcher = $dispatcher;
+	}
+
+	public function __construct( array $attributes = [] )
+	{
+		if( Arr::has( $attributes, 'id' )) {
+			$this->id = Arr::pluck( $attributes, 'id' );
+		}
+		$this->attributes = $attributes;
 	}
 
 	/**
-	 * Generated resource item.
-	 * @return Item
+	 * {@inheritdoc}
 	 */
-	public function item(): Item
+	public function __get( $name )
 	{
-		return new Item( [
-				'type' => $this->type(),
-				'attributes' => $this->attributes
-			]
-		);
+		return Arr::get( $this->attributes, $name );
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function __set( $name, $value )
+	{
+		if( $name === 'id' ) {
+			$this->id = $value;
+		}
+		else {
+			$this->attributes[$name] = $value;
+		}
+	}
+
+	/**
+	 * @param Model $relation
+	 */
+	public function addRelation( $relation )
+	{
 	}
 
 	/**
@@ -95,25 +100,15 @@ abstract class Model
 	}
 
 	/**
-	 * @param Model $relation
-	 */
-	public function addRelation( $relation )
-	{
-
-	}
-
-	/**
 	 * @return Fluent
 	 */
 	public function baseRequest(): Fluent
 	{
 		// Set resource type.
-		$dispatch = call_user_func_array( [
+		$dispatch = call_user_func_array([
 			static::$dispatcher,
 			$this->type()
-		],
-			[]
-		);
+		], [] );
 		// Set resource Id.
 		if( $this->id ) {
 			$dispatch->id( $this->id );
@@ -133,38 +128,37 @@ abstract class Model
 	}
 
 	/**
+	 * Generated resource item.
+	 * @return Item
+	 */
+	public function item(): Item
+	{
+		return new Item( [
+				'type' => $this->type(),
+				'attributes' => $this->attributes
+			]
+		);
+	}
+
+	/**
 	 * Creates or updates a resource.
 	 * @return mixed
 	 */
 	public function save()
 	{
 		return $this->baseRequest()
-			// Set method and variables.
-			->post(
-				$this->item()->toArray()
-			)
-			// Send request.
+			->post( $this->item()->toArray() )
 			->request();
 	}
 
 	/**
-	 * {@inheritdoc}
+	 * Resource type.
+	 * @return string
 	 */
-	function __set( $name, $value )
+	public function type(): string
 	{
-		if( $name === 'id' ) {
-			$this->id = $value;
-		}
-		else {
-			$this->attributes[$name] = $value;
-		}
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	function __get( $name )
-	{
-		return Arr::get( $this->attributes, $name );
+		return Str::plural( Str::lower(
+			Str::replaceFirst( __NAMESPACE__.'\\', '', static::class )
+		));
 	}
 }
