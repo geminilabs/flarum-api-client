@@ -3,28 +3,25 @@
 namespace Flagrow\Flarum\Api;
 
 use Flagrow\Flarum\Api\Exceptions\UnauthorizedRequestMethodException;
+use Flagrow\Flarum\Api\Flarum;
 
 class Fluent
 {
-	protected $types = [
+	const METHODS = [
+		'get', 'head', 'post', 'put', 'patch', 'delete',
+	];
+
+	const METHODS_REQUIRING_AUTHENTICATION = [
+		'post', 'put', 'patch', 'delete',
+	];
+
+	const PAGINATION = [
+		'filter', 'page',
+	];
+
+	const TYPES = [
 		'discussions',
 		'users',
-	];
-
-	protected $methods = [
-		'get',
-		'head',
-		'post',
-		'put',
-		'patch',
-		'delete',
-	];
-
-	protected $methodsRequiringAuthorization = [
-		'post',
-		'put',
-		'patch',
-		'delete',
 	];
 
 	/**
@@ -41,14 +38,6 @@ class Fluent
 	 * @var string
 	 */
 	protected $method = 'get';
-
-	/**
-	 * @var array
-	 */
-	protected $pagination = [
-		'filter',
-		'page',
-	];
 
 	/**
 	 * @var array
@@ -71,23 +60,20 @@ class Fluent
 	}
 
 	/**
-	 * @param $name
-	 * @param $arguments
-	 * @return Fluent
+	 * @return void|Fluent
 	 */
-	function __call( $name, $arguments )
+	public function __call( string $name, array $arguments = [] )
 	{
-		if( in_array( $name, $this->methods )) {
-			if( !empty( $arguments )) {
-				$this->setVariables( $arguments );
-			}
-			return $this->setMethod( $name, $arguments );
+		if( $this->shouldSetMethod( $name, $arguments )) {
+			return $this->setMethod($name, $arguments);
 		}
-		if( count( $arguments ) === 0 && in_array( $name, $this->types )) {
-			return $this->handleType( $name );
+		if( $this->shouldHandleType( $name, $arguments )) {
+			return $this->handleType($name);
 		}
-		if( in_array( $name, $this->pagination ) && count( $arguments ) === 1 ) {
-			return call_user_func_array( [$this, 'handlePagination'], array_prepend( $arguments, $name ));
+		if( $this->shouldHandlePagination( $name, $arguments )) {
+			return call_user_func_array( [$this, 'handlePagination'],
+				array_prepend( $arguments, $name )
+			);
 		}
 		if( method_exists( $this->flarum, $name )) {
 			return call_user_func_array( [$this->flarum, $name], $arguments );
@@ -97,17 +83,14 @@ class Fluent
 	/**
 	 * {@inheritdoc}
 	 */
-	function __toString()
+	public function __toString()
 	{
 		$path = implode( '/', $this->segments );
-		if( $this->includes || $this->query ) {
+		if( !empty( array_filter( array_merge( $this->includes, $this->query )))) {
 			$path .= '?';
 		}
 		if( $this->includes ) {
-			$path .= sprintf(
-				'include=%s&',
-				implode( ',', $this->includes )
-			);
+			$path .= sprintf( 'include=%s&', implode( ',', $this->includes ));
 		}
 		if( $this->query ) {
 			$path .= http_build_query( $this->query );
@@ -132,7 +115,25 @@ class Fluent
 	}
 
 	/**
-	 * @param $id
+	 * @param string|array $value
+	 * @return Fluent
+	 */
+	protected function handlePagination( string $type, $value ): Flarum
+	{
+		$this->query[$type] = $value;
+		return $this;
+	}
+
+	/**
+	 * @return Fluent
+	 */
+	protected function handleType( string $type ): Fluent
+	{
+		$this->segments[] = $type;
+		return $this;
+	}
+
+	/**
 	 * @return Fluent
 	 */
 	public function id( int $id ): Fluent
@@ -142,7 +143,6 @@ class Fluent
 	}
 
 	/**
-	 * @param string $include
 	 * @return Fluent
 	 */
 	public function include( string $include ): Fluent
@@ -152,7 +152,6 @@ class Fluent
 	}
 
 	/**
-	 * @param int $number
 	 * @return Fluent
 	 */
 	public function offset( int $number ): Fluent
@@ -161,55 +160,59 @@ class Fluent
 	}
 
 	/**
-	 * @param string $method
 	 * @return Fluent
 	 * @throws UnauthorizedRequestMethodException
 	 */
 	public function setMethod( string $method ): Fluent
 	{
 		$this->method = strtolower( $method );
-		if(
-			$this->flarum->isStrict() &&
-			!$this->flarum->isAuthorized() &&
-			in_array( $this->method, $this->methodsRequiringAuthorization ) ) {
+		if( !$this->flarum->isAuthorized()
+			&& $this->flarum->isStrict()
+			&& in_array( $this->method, static::METHODS_REQUIRING_AUTHENTICATION )) {
 			throw new UnauthorizedRequestMethodException( $this->method );
 		}
 		return $this;
 	}
 
 	/**
-	 * @param array $variables
-	 * @return $this
+	 * @return Fluent
 	 */
-	public function setVariables( array $variables = [] )
+	public function setVariables( array $variables = [] ): Fluent
 	{
 		if( count( $variables ) === 1 && is_array( $variables[0] )) {
 			$this->variables = $variables[0];
 		}
-		else {
+		else if( !empty( $variables )) {
 			$this->variables = $variables;
 		}
 		return $this;
 	}
 
 	/**
-	 * @param string $type
-	 * @param        $value
-	 * @return $this
+	 * @return bool
 	 */
-	protected function handlePagination( string $type, $value )
+	protected function shouldHandlePagination( string $name, array $arguments ): bool
 	{
-		$this->query[$type] = $value;
-		return $this;
+		return in_array( $name, static::PAGINATION ) && count( $arguments ) === 1;
 	}
 
 	/**
-	 * @param string $type
-	 * @return Fluent
+	 * @return bool
 	 */
-	protected function handleType( string $type ): Fluent
+	protected function shouldHandleType( string $name, array $arguments ): bool
 	{
-		$this->segments[] = $type;
-		return $this;
+		return in_array( $name, static::TYPES ) && count( $arguments ) === 0;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function shouldSetMethod( string $name, array $arguments ): bool
+	{
+		if( in_array( $name, static::METHODS )) {
+			$this->setVariables( $arguments );
+			return true;
+		}
+		return false;
 	}
 }

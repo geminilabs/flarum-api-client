@@ -9,26 +9,34 @@ use Psr\Http\Message\ResponseInterface;
 
 class Factory
 {
+	/**
+	 * @return true|null|Collection|Item
+	 */
 	public static function build( ResponseInterface $response )
 	{
-		$body = $response->getBody();
 		if( $response->getStatusCode() === 204 ) {
 			return true;
 		}
+		$body = $response->getBody();
 		if( empty( $body )) {
 			return null;
 		}
 		$json = json_decode( $body, true );
 		$data = Arr::get( $json, 'data' );
-		$included = Arr::get( $json, 'included', [] );
-		// Sets included values to global store.
+		static::storeIncluded( $json );
+		return $data && !array_key_exists( 'type', $data )
+			? (new Collection( $data ))->cache()
+			: (new Item( $data ))->cache();
+	}
+
+	/**
+	 * @return void
+	 */
+	public static function storeIncluded( array $data ): void
+	{
+		$included = Arr::get( $data, 'included', [] );
 		if( !empty( $included )) {
 			(new Collection( $included ))->cache();
 		}
-		// Collection, paginated
-		if( $data && !array_key_exists( 'type', $data )) {
-			return (new Collection( $data ))->cache();
-		}
-		return (new Item( $data ))->cache();
 	}
 }

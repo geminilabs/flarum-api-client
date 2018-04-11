@@ -8,16 +8,14 @@ use Illuminate\Contracts\Cache\Store;
 class Cache
 {
 	/**
-	 * Current active store.
 	 * @var string
 	 */
-	protected $active;
+	protected $activeStore;
 
 	/**
-	 * Time in minutes to cache the stored values.
 	 * @var int
 	 */
-	protected $duration = 60;
+	protected $minutesToCache = 60;
 
 	/**
 	 * @var Store
@@ -38,21 +36,22 @@ class Cache
 	 * @param string|null $type
 	 * @return mixed
 	 */
-	public function all( string $type = null )
+	public function all( $type = null )
 	{
 		return $this->getStore( $type )->all();
 	}
 
 	/**
-	 * @param int $id
-	 * @param null $default
+	 * @param mixed $default
 	 * @param string|null $type
 	 * @return mixed
 	 */
-	public function get( int $id, $default = null, string $type = null )
+	public function get( int $id, $default = null, $type = null )
 	{
-		$value = $this->getStore( $type )->get( $id );
-		return $value ?: $default;
+		if( $value = $this->getStore( $type )->get( $id )) {
+			return $value;
+		}
+		return $default;
 	}
 
 	/**
@@ -60,16 +59,18 @@ class Cache
 	 */
 	public function getActive(): Store
 	{
-		return $this->active;
+		return $this->activeStore;
 	}
 
 	/**
 	 * @param string|null $store
 	 * @return Store
 	 */
-	public function getStore( string $store = null ): Store
+	public function getStore( $store = null ): Store
 	{
-		$store = $store ?? $this->active;
+		if( is_null( $store )) {
+			$store = $this->activeStore;
+		}
 		if( !array_key_exists( $store, $this->stores )) {
 			$this->stores[$store] = clone $this->store;
 		}
@@ -77,24 +78,21 @@ class Cache
 	}
 
 	/**
-	 * @param int $id
-	 * @param Item $item
 	 * @param string|null $type
 	 * @return Cache
 	 */
-	public function set( int $id, Item $item, string $type = null ): Cache
+	public function set( int $id, Item $item, $type = null ): Cache
 	{
-		$this->getStore( $type )->put( $id, $item, $this->duration );
+		$this->getStore( $type )->put( $id, $item, $this->minutesToCache );
 		return $this;
 	}
 
 	/**
-	 * @param string $type
 	 * @return Cache
 	 */
 	public function setActive( string $type ): Cache
 	{
-		$this->active = $type;
+		$this->activeStore = $type;
 		return $this;
 	}
 }

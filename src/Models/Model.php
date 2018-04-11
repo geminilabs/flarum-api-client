@@ -26,9 +26,12 @@ abstract class Model
 	 */
 	protected $id;
 
+	/**
+	 * @return Item
+	 */
 	public static function fromResource( Item $item )
 	{
-		$class = sprintf( "%s\\%s", __NAMESPACE__, Str::camel( Str::singular( $item->type )));
+		$class = sprintf( '%s\\%s', __NAMESPACE__, Str::camel( Str::singular( $item->type )));
 		if( class_exists( $class )) {
 			$response = new $class( $item->attributes );
 			if( $item->id ) {
@@ -36,7 +39,7 @@ abstract class Model
 			}
 			return $response;
 		}
-		throw new InvalidArgumentException( "Resource type {$item->type} could not be migrated to Model" );
+		throw new InvalidArgumentException( 'Resource type '.$item->type.' could not be migrated to Model' );
 	}
 
 	/**
@@ -48,11 +51,11 @@ abstract class Model
 	}
 
 	/**
-	 * @param Flarum $dispatcher
+	 * @return void
 	 */
-	public static function setDispatcher( Flarum $dispatcher )
+	public static function setDispatcher( Flarum $flarum )
 	{
-		self::$dispatcher = $dispatcher;
+		self::$dispatcher = $flarum;
 	}
 
 	public function __construct( array $attributes = [] )
@@ -85,13 +88,6 @@ abstract class Model
 	}
 
 	/**
-	 * @param Model $relation
-	 */
-	public function addRelation( $relation )
-	{
-	}
-
-	/**
 	 * @return array
 	 */
 	public function attributes(): array
@@ -104,12 +100,7 @@ abstract class Model
 	 */
 	public function baseRequest(): Fluent
 	{
-		// Set resource type.
-		$dispatch = call_user_func_array([
-			static::$dispatcher,
-			$this->type()
-		], [] );
-		// Set resource Id.
+		$dispatch = call_user_func_array( [static::$dispatcher, $this->type()], [] );
 		if( $this->id ) {
 			$dispatch->id( $this->id );
 		}
@@ -121,27 +112,25 @@ abstract class Model
 	 */
 	public function delete()
 	{
-		if( !$this->id ) {
-			throw new InvalidArgumentException( "Resource doesn't exist." );
+		if( $this->id ) {
+			return $this->baseRequest()->delete()->request();
 		}
-		return $this->baseRequest()->delete()->request();
+		throw new InvalidArgumentException( 'Resource doesn\'t exist.' );
 	}
 
+
 	/**
-	 * Generated resource item.
 	 * @return Item
 	 */
 	public function item(): Item
 	{
-		return new Item( [
-				'type' => $this->type(),
-				'attributes' => $this->attributes
-			]
-		);
+		return new Item([
+			'attributes' => $this->attributes,
+			'type' => $this->type(),
+		]);
 	}
 
 	/**
-	 * Creates or updates a resource.
 	 * @return mixed
 	 */
 	public function save()
@@ -152,7 +141,6 @@ abstract class Model
 	}
 
 	/**
-	 * Resource type.
 	 * @return string
 	 */
 	public function type(): string

@@ -2,6 +2,10 @@
 
 namespace Flagrow\Flarum\Api;
 
+use Flagrow\Flarum\Api\Cache;
+use Flagrow\Flarum\Api\Fluent;
+use Flagrow\Flarum\Api\Resource\Collection;
+use Flagrow\Flarum\Api\Resource\Item;
 use Flagrow\Flarum\Api\Response\Factory;
 use GuzzleHttp\Client as Guzzle;
 use Illuminate\Cache\ArrayStore;
@@ -28,7 +32,7 @@ class Flarum
 	/**
 	 * @var Guzzle
 	 */
-	protected $rest;
+	protected $guzzle;
 
 	/**
 	 * Whether to enforce specific markup/variables setting.
@@ -37,25 +41,15 @@ class Flarum
 	protected $strict = true;
 
 	/**
-	 * @return Cache
+	 * @param $host Full FQDN hostname to your Flarum forum, eg http://example.com/forum
+	 * @param array $authorization Holding either "token" or "identification" and "password" as keys.
 	 */
-	public static function getCache(): Cache
+	public function __construct( string $host, array $authorization = [] )
 	{
-		return self::$cache;
-	}
-
-	/**
-	 * Flarum constructor.
-	 * @param       $host          Full FQDN hostname to your Flarum forum, eg http://example.com/forum
-	 * @param array $authorization Holding either "token" or "username" and "password" as keys.
-	 */
-	public function __construct( $host, array $authorization = [] )
-	{
-		$this->rest = new Guzzle( [
-				'base_uri' => "$host/api/",
-				'headers' => $this->requestHeaders( $authorization )
-			]
-		);
+		$this->guzzle = new Guzzle([
+			'base_uri' => $host.'/api/',
+			'headers' => $this->requestHeaders( $authorization )
+		]);
 		$this->fluent();
 		static::$cache = new Cache( new ArrayStore );
 	}
@@ -63,9 +57,17 @@ class Flarum
 	/**
 	 * {@inheritdoc}
 	 */
-	public function __call( $name, $arguments )
+	public function __call( string $name, array $arguments = [] )
 	{
 		return call_user_func_array( [$this->fluent, $name], $arguments );
+	}
+
+	/**
+	 * @return Cache
+	 */
+	public static function getCache(): Cache
+	{
+		return self::$cache;
 	}
 
 	/**
@@ -93,22 +95,22 @@ class Flarum
 	}
 
 	/**
-	 * @return null
+	 * @return void|Item|Collection
 	 */
 	public function request()
 	{
 		$method = $this->fluent->getMethod();
-		/** @var ResponseInterface $response */
-		$response = $this->rest->{$method}( (string)$this->fluent, $this->getVariablesForMethod() );
+		$response = call_user_func( [$this->guzzle, $method],
+			(string)$this->fluent,
+			$this->getVariablesForMethod()
+		);
 		if( $response->getStatusCode() >= 200 && $response->getStatusCode() < 300 ) {
-			// Reset the fluent builder for a new request.
-			$this->fluent();
+			$this->resetFluent();
 			return Factory::build( $response );
 		}
 	}
 
 	/**
-	 * @param bool $strict
 	 * @return Flarum
 	 */
 	public function setStrict( bool $strict ): Flarum
@@ -118,49 +120,40 @@ class Flarum
 	}
 
 	/**
-	 * @return Flarum
-	 */
-	protected function fluent(): Flarum
-	{
-		$this->fluent = new Fluent( $this );
-		return $this;
-	}
-
-	/**
 	 * @return array
 	 */
 	protected function getVariablesForMethod(): array
 	{
+		$method = $this->fluent->getMethod();
 		$variables = $this->fluent->getVariables();
-		if( empty( $variables )) {
-			return [];
+		if( $method == 'get' || empty( $variables )) {
+			return $variables;
 		}
-		switch( $this->fluent->getMethod() ) {
-			case 'get':
-				return $variables;
-				break;
-			default:
-				return [
-					'json' => ['data' => $variables]
-				];
-		}
+		return ['json' => ['data' => $variables]];
 	}
 
 	/**
-	 * @param array $authorization
 	 * @return array
 	 */
-	protected function requestHeaders( array $authorization = [] )
+	protected function requestHeaders( array $authorization = [] ): array
 	{
 		$headers = [
 			'Accept' => 'application/vnd.api+json, application/json',
 			'User-Agent' => 'Flagrow Api Client'
 		];
-		$token = Arr::get( $authorization, 'token' );
-		if( $token ) {
+		if( $token = Arr::get( $authorization, 'token' )) {
 			$this->authorized = true;
 			Arr::set( $headers, 'Authorization', "Token $token" );
 		}
 		return $headers;
+	}
+
+	/**
+	 * @return Flarum
+	 */
+	protected function resetFluent(): Flarum
+	{
+		$this->fluent = new Fluent( $this );
+		return $this;
 	}
 }

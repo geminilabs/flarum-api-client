@@ -2,18 +2,19 @@
 
 namespace Flagrow\Flarum\Api\Resource;
 
+use Flagrow\Flarum\Api\Flarum;
 use Flagrow\Flarum\Api\Traits\HasRelationships;
-use Flagrow\Flarum\Api\Traits\UsesCache;
+use Flagrow\Flarum\Api\Traits\ItemUsesCache;
 use Illuminate\Support\Arr;
 
 class Item extends Resource
 {
-	use HasRelationships, UsesCache;
+	use HasRelationships;
 
 	/**
-	 * @var string
+	 * @var array
 	 */
-	public $type;
+	public $attributes = [];
 
 	/**
 	 * @var int
@@ -21,9 +22,9 @@ class Item extends Resource
 	public $id;
 
 	/**
-	 * @var array
+	 * @var string
 	 */
-	public $attributes = [];
+	public $type;
 
 	public function __construct( array $item = [] )
 	{
@@ -46,13 +47,25 @@ class Item extends Resource
 		}
 	}
 
-	public function toArray()
+	/**
+	 * @return Item
+	 */
+	public function cache(): Item
+	{
+		Flarum::getCache()->set( $this->id, $this, $this->type );
+		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function toArray(): array
 	{
 		return [
-			'id' => $this->id,
-			'type' => $this->type,
 			'attributes' => $this->attributes,
+			'id' => $this->id,
 			'relationships' => $this->relationships
+			'type' => $this->type,
 		];
 	}
 }

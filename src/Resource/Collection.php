@@ -2,19 +2,15 @@
 
 namespace Flagrow\Flarum\Api\Resource;
 
-use Illuminate\Support\Collection as Collect;
+use Illuminate\Support\Collection as IlluminateCollection;
 
 class Collection extends Resource
 {
 	/**
-	 * @var array|Item[]
+	 * @var array
 	 */
 	protected $items = [];
 
-	/**
-	 * Collection constructor.
-	 * @param array $data
-	 */
 	public function __construct( array $data )
 	{
 		foreach( $data as $item ) {
@@ -26,7 +22,7 @@ class Collection extends Resource
 	/**
 	 * @return Collection
 	 */
-	public function cache()
+	public function cache(): Collection
 	{
 		foreach( $this->items as $id => $item ) {
 			$item->cache();
@@ -35,24 +31,23 @@ class Collection extends Resource
 	}
 
 	/**
-	 * @return Collect
+	 * @return IlluminateCollection
 	 */
-	public function collect(): Collect
+	public function collect(): IlluminateCollection
 	{
 		return collect( $this->items )->keyBy( 'id' );
 	}
 
 	/**
-	 * @param string $by
 	 * @param int|null $amount
-	 * @return Collect
+	 * @return IlluminateCollection
 	 */
-	public function latest( string $by = 'created_at', int $amount = null ): Collect
+	public function latest( string $by = 'created_at', int $amount = null ): IlluminateCollection
 	{
-		$set = $this->collect()->sortBy( $by );
+		$collection = $this->collect()->sortBy( $by );
 		if( $amount ) {
-			$set = $set->splice( 0, $amount );
+			$collection = $collection->splice( 0, $amount );
 		}
-		return $set;
+		return $collection;
 	}
 }
