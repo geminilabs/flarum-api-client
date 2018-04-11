@@ -47,7 +47,7 @@ class Flarum
 	public function __construct( string $host, array $authorization = [] )
 	{
 		$this->guzzle = new Guzzle([
-			'base_uri' => $host.'/api/',
+			'base_uri' => rtrim( $host, '/' ).'/api/',
 			'headers' => $this->requestHeaders( $authorization )
 		]);
 		$this->fluent();
