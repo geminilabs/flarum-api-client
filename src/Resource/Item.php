@@ -4,7 +4,6 @@ namespace Flagrow\Flarum\Api\Resource;
 
 use Flagrow\Flarum\Api\Flarum;
 use Flagrow\Flarum\Api\Traits\HasRelationships;
-use Flagrow\Flarum\Api\Traits\ItemUsesCache;
 use Illuminate\Support\Arr;
 
 class Item extends Resource
@@ -64,7 +63,7 @@ class Item extends Resource
 		return [
 			'attributes' => $this->attributes,
 			'id' => $this->id,
-			'relationships' => $this->relationships
+			'relationships' => $this->relationships,
 			'type' => $this->type,
 		];
 	}
