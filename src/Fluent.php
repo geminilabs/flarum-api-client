@@ -59,15 +59,15 @@ class Fluent
 	}
 
 	/**
-	 * @return void|Fluent
+	 * @return mixed
 	 */
 	public function __call( string $name, array $arguments = [] )
 	{
-		if( $this->shouldSetMethod( $name, $arguments )) {
-			return $this->setMethod($name, $arguments);
-		}
 		if( $this->shouldHandleType( $name, $arguments )) {
-			return $this->handleType($name);
+			return $this->handleType( $name );
+		}
+		if( $this->shouldSetMethod( $name, $arguments )) {
+			return $this->setMethod( $name, $arguments );
 		}
 		if( $this->shouldHandlePagination( $name, $arguments )) {
 			return call_user_func_array( [$this, 'handlePagination'],
@@ -95,6 +95,16 @@ class Fluent
 			$path .= http_build_query( $this->query );
 		}
 		return $path;
+	}
+
+	/**
+	 * @return object
+	 */
+	public function authenticate( array $credentials = [] )
+	{
+		$this->method = 'post';
+		$this->segments = ['token'];
+		return $this->setVariables( $credentials )->flarum->request();
 	}
 
 	/**

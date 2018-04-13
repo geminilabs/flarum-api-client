@@ -9,23 +9,25 @@ use Psr\Http\Message\ResponseInterface;
 
 class Factory
 {
+	const STATUS_NO_CONTENT = 204;
+
 	/**
-	 * @return true|null|Collection|Item
+	 * @return true|void|Collection|Item
 	 */
 	public static function build( ResponseInterface $response )
 	{
-		if( $response->getStatusCode() === 204 ) {
+		if( $response->getStatusCode() === static::STATUS_NO_CONTENT ) {
 			return true;
 		}
-		if( empty( $body = $response->getBody() )) {
-			return null;
-		}
+		if( empty( $body = $response->getBody() ))return;
 		$json = json_decode( $body, true );
-		$data = Arr::get( $json, 'data' );
 		static::storeIncluded( $json );
-		return $data && !array_key_exists( 'type', $data )
-			? (new Collection( $data ))->cache()
-			: (new Item( $data ))->cache();
+		if( $data = Arr::get( $json, 'data' )) {
+			return array_key_exists( 'type', $data )
+				? (new Item( $data ))->cache()
+				: (new Collection( $data ))->cache();
+		}
+		return $json;
 	}
 
 	/**

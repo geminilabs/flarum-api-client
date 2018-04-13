@@ -8,6 +8,7 @@ use Flagrow\Flarum\Api\Resource\Collection;
 use Flagrow\Flarum\Api\Resource\Item;
 use Flagrow\Flarum\Api\Response\Factory;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Support\Arr;
 
@@ -79,19 +80,25 @@ class Flarum
 	}
 
 	/**
-	 * @return void|Item|Collection
+	 * @return true|object|Collection|Item
+	 * @throws RequestException
 	 */
 	public function request()
 	{
-		$method = $this->fluent->getMethod();
-		$response = call_user_func( [$this->client, $method],
-			(string)$this->fluent,
-			$this->getVariablesForMethod()
-		);
-		if( $response->getStatusCode() >= 200 && $response->getStatusCode() < 300 ) {
-			$this->setFluent();
+		try {
+			$response = call_user_func( [$this->client, $this->fluent->getMethod()],
+				(string)$this->fluent,
+				$this->getVariablesForMethod()
+			);
+		}
+		catch( RequestException $e ) {
+			$response = $e->getResponse();
+		}
+		if( floor( $response->getStatusCode() / 100 ) == 2 ) {
+			$this->resetFluent();
 			return Factory::build( $response );
 		}
+		return json_decode( $response->getBody() );
 	}
 
 	/**
@@ -130,7 +137,18 @@ class Flarum
 		if( $method == 'get' || empty( $variables )) {
 			return $variables;
 		}
-		return ['json' => ['data' => $variables]];
+		if( (string)$this->fluent !== 'token' ) {
+			$variables = ['data' => $variables];
+		}
+		return ['json' => $variables];
+	}
+
+	/**
+	 * @return Flarum
+	 */
+	protected function resetFluent(): Flarum
+	{
+		return $this->setFluent();
 	}
 
 	/**
