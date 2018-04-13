@@ -69,28 +69,13 @@ class Flarum
 	}
 
 	/**
-	 * @return Fluent
+	 * @return mixed|void
 	 */
-	public function getFluent(): Fluent
+	public function __get( string $property )
 	{
-		return $this->fluent;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isAuthorized(): bool
-	{
-		return $this->isAuthorized;
-	}
-
-	/**
-	 * Whether to enforce specific markup/variables setting.
-	 * @return bool
-	 */
-	public function isStrict(): bool
-	{
-		return $this->isStrict;
+		if( property_exists( $this, $property )) {
+			return $this->{$property};
+		}
 	}
 
 	/**
