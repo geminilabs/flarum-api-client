@@ -98,7 +98,7 @@ class Flarum
 			$this->resetFluent();
 			return Factory::build( $response );
 		}
-		return json_decode( $response->getBody() );
+		return (object)json_decode( $response->getBody() );
 	}
 
 	/**

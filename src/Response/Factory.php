@@ -12,7 +12,7 @@ class Factory
 	const STATUS_NO_CONTENT = 204;
 
 	/**
-	 * @return true|void|Collection|Item
+	 * @return true|void|Collection|Item|object
 	 */
 	public static function build( ResponseInterface $response )
 	{
@@ -27,7 +27,7 @@ class Factory
 				? (new Item( $data ))->cache()
 				: (new Collection( $data ))->cache();
 		}
-		return $json;
+		return (object)$json;
 	}
 
 	/**
