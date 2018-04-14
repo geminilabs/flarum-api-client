@@ -2,7 +2,7 @@
 
 namespace Flagrow\Flarum\Api\Resource;
 
-abstract class Resource
+interface Resource
 {
-	abstract public function cache();
+	public function cache();
 }

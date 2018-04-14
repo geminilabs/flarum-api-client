@@ -34,7 +34,7 @@ abstract class Model
 		$class = sprintf( '%s\\%s', __NAMESPACE__, Str::camel( Str::singular( $item->type )));
 		if( class_exists( $class )) {
 			$response = new $class( $item->attributes );
-			if( $item->id ) {
+			if( !empty( $item->id )) {
 				$response->id = $item->id;
 			}
 			return $response;
@@ -101,7 +101,7 @@ abstract class Model
 	public function baseRequest(): Fluent
 	{
 		$dispatch = call_user_func_array( [static::$dispatcher, $this->type()], [] );
-		if( $this->id ) {
+		if( !empty( $this->id )) {
 			$dispatch->id( $this->id );
 		}
 		return $dispatch;
@@ -112,7 +112,7 @@ abstract class Model
 	 */
 	public function delete()
 	{
-		if( $this->id ) {
+		if( !empty( $this->id )) {
 			return $this->baseRequest()->delete()->request();
 		}
 		throw new InvalidArgumentException( 'Resource doesn\'t exist.' );

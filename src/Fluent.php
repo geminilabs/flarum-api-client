@@ -4,7 +4,17 @@ namespace Flagrow\Flarum\Api;
 
 use Flagrow\Flarum\Api\Exceptions\UnauthorizedRequestMethodException;
 use Flagrow\Flarum\Api\Flarum;
+use Psr\Http\Message\ResponseInterface;
 
+/**
+ * @method ResponseInterface delete( string $uri, array $options = [] )
+ * @method ResponseInterface get( string $uri, array $options = [] )
+ * @method ResponseInterface head( string $uri, array $options = [] )
+ * @method ResponseInterface patch( string $uri, array $options = [] )
+ * @method ResponseInterface post( string $uri, array $options = [] )
+ * @method ResponseInterface put( string $uri, array $options = [] )
+ * @method true|object|Resource request()
+ */
 class Fluent
 {
 	const METHODS = [
@@ -66,8 +76,9 @@ class Fluent
 		if( $this->shouldHandleType( $name, $arguments )) {
 			return $this->handleType( $name );
 		}
-		if( $this->shouldSetMethod( $name, $arguments )) {
-			return $this->setMethod( $name, $arguments );
+		if( $this->shouldSetMethod( $name )) {
+			$this->setVariables( $arguments );
+			return $this->setMethod( $name );
 		}
 		if( $this->shouldHandlePagination( $name, $arguments )) {
 			return call_user_func_array( [$this, 'handlePagination'],
@@ -88,10 +99,10 @@ class Fluent
 		if( !empty( array_filter( array_merge( $this->includes, $this->query )))) {
 			$path .= '?';
 		}
-		if( $this->includes ) {
+		if( !empty( $this->includes )) {
 			$path .= sprintf( 'include=%s&', implode( ',', $this->includes ));
 		}
-		if( $this->query ) {
+		if( !empty( $this->query )) {
 			$path .= http_build_query( $this->query );
 		}
 		return $path;
@@ -127,7 +138,7 @@ class Fluent
 	 * @param string|array $value
 	 * @return Fluent
 	 */
-	protected function handlePagination( string $type, $value ): Flarum
+	protected function handlePagination( string $type, $value ): Fluent
 	{
 		$this->query[$type] = $value;
 		return $this;
@@ -216,12 +227,8 @@ class Fluent
 	/**
 	 * @return bool
 	 */
-	protected function shouldSetMethod( string $name, array $arguments ): bool
+	protected function shouldSetMethod( string $name ): bool
 	{
-		if( in_array( $name, static::METHODS )) {
-			$this->setVariables( $arguments );
-			return true;
-		}
-		return false;
+		return in_array( $name, static::METHODS );
 	}
 }

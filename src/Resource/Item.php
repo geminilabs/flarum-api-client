@@ -3,10 +3,11 @@
 namespace Flagrow\Flarum\Api\Resource;
 
 use Flagrow\Flarum\Api\Flarum;
+use Flagrow\Flarum\Api\Resource\Resource;
 use Flagrow\Flarum\Api\Traits\HasRelationships;
 use Illuminate\Support\Arr;
 
-class Item extends Resource
+class Item implements Resource
 {
 	use HasRelationships;
 
@@ -36,7 +37,7 @@ class Item extends Resource
 	/**
 	 * {@inheritdoc}
 	 */
-	function __get( $name )
+	public function __get( $name )
 	{
 		if( Arr::has( $this->attributes, $name )) {
 			return Arr::get( $this->attributes, $name );

@@ -4,14 +4,17 @@ namespace Flagrow\Flarum\Api;
 
 use Flagrow\Flarum\Api\Cache;
 use Flagrow\Flarum\Api\Fluent;
-use Flagrow\Flarum\Api\Resource\Collection;
-use Flagrow\Flarum\Api\Resource\Item;
+use Flagrow\Flarum\Api\Resource\Resource;
 use Flagrow\Flarum\Api\Response\Factory;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Support\Arr;
 
+/**
+ * @method bool isAuthorized()
+ * @method bool isStrict()
+ */
 class Flarum
 {
 	/**
@@ -80,7 +83,7 @@ class Flarum
 	}
 
 	/**
-	 * @return true|object|Collection|Item
+	 * @return true|object|Resource
 	 * @throws RequestException
 	 */
 	public function request()

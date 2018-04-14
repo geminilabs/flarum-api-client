@@ -4,6 +4,7 @@ namespace Flagrow\Flarum\Api\Response;
 
 use Flagrow\Flarum\Api\Resource\Collection;
 use Flagrow\Flarum\Api\Resource\Item;
+use Flagrow\Flarum\Api\Resource\Resource;
 use Illuminate\Support\Arr;
 use Psr\Http\Message\ResponseInterface;
 
@@ -12,7 +13,7 @@ class Factory
 	const STATUS_NO_CONTENT = 204;
 
 	/**
-	 * @return true|void|Collection|Item|object
+	 * @return true|void|Resource|object
 	 */
 	public static function build( ResponseInterface $response )
 	{

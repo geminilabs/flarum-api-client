@@ -2,9 +2,10 @@
 
 namespace Flagrow\Flarum\Api\Resource;
 
+use Flagrow\Flarum\Api\Resource\Resource;
 use Illuminate\Support\Collection as IlluminateCollection;
 
-class Collection extends Resource
+class Collection implements Resource
 {
 	/**
 	 * @var array
@@ -45,7 +46,7 @@ class Collection extends Resource
 	public function latest( string $by = 'created_at', $amount = null ): IlluminateCollection
 	{
 		$collection = $this->collect()->sortBy( $by );
-		if( $amount ) {
+		if( !empty( $amount )) {
 			$collection = $collection->splice( 0, $amount );
 		}
 		return $collection;
