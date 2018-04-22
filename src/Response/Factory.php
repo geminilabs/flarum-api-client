@@ -24,11 +24,19 @@ class Factory
 		$json = json_decode( $body, true );
 		static::storeIncluded( $json );
 		if( $data = Arr::get( $json, 'data' )) {
-			return array_key_exists( 'type', $data )
-				? (new Item( $data ))->cache()
-				: (new Collection( $data ))->cache();
+			return static::cacheData( $data );
 		}
 		return (object)$json;
+	}
+
+	/**
+	 * @return Resource
+	 */
+	public static function cacheData( $data )
+	{
+		return array_key_exists( 'type', $data )
+			? (new Item( $data ))->cache()
+			: (new Collection( $data ))->cache();
 	}
 
 	/**

@@ -4,15 +4,14 @@ namespace Flagrow\Flarum\Api;
 
 use Flagrow\Flarum\Api\Exceptions\UnauthorizedRequestMethodException;
 use Flagrow\Flarum\Api\Flarum;
-use Psr\Http\Message\ResponseInterface;
 
 /**
- * @method ResponseInterface delete( string $uri, array $options = [] )
- * @method ResponseInterface get( string $uri, array $options = [] )
- * @method ResponseInterface head( string $uri, array $options = [] )
- * @method ResponseInterface patch( string $uri, array $options = [] )
- * @method ResponseInterface post( string $uri, array $options = [] )
- * @method ResponseInterface put( string $uri, array $options = [] )
+ * @method Fluent delete( array $args = [] )
+ * @method Fluent get( array $args = [] )
+ * @method Fluent head( array $args = [] )
+ * @method Fluent patch( array $args = [] )
+ * @method Fluent post( array $args = [] )
+ * @method Fluent put( array $args = [] )
  * @method true|object|Resource request()
  */
 class Fluent
@@ -25,12 +24,12 @@ class Fluent
 		'delete', 'patch', 'post', 'put',
 	];
 
-	const PAGINATION = [
-		'filter', 'page',
+	const MODELS = [
+		'discussions', 'users',
 	];
 
-	const TYPES = [
-		'discussions', 'users',
+	const PAGINATION = [
+		'filter', 'page',
 	];
 
 	/**
@@ -73,8 +72,8 @@ class Fluent
 	 */
 	public function __call( string $name, array $arguments = [] )
 	{
-		if( $this->shouldHandleType( $name, $arguments )) {
-			return $this->handleType( $name );
+		if( $this->shouldHandleModel( $name, $arguments )) {
+			return $this->handleModel( $name );
 		}
 		if( $this->shouldSetMethod( $name )) {
 			$this->setVariables( $arguments );
@@ -138,18 +137,18 @@ class Fluent
 	 * @param string|array $value
 	 * @return Fluent
 	 */
-	protected function handlePagination( string $type, $value ): Fluent
+	protected function handlePagination( string $model, $value ): Fluent
 	{
-		$this->query[$type] = $value;
+		$this->query[$model] = $value;
 		return $this;
 	}
 
 	/**
 	 * @return Fluent
 	 */
-	protected function handleType( string $type ): Fluent
+	protected function handleModel( string $model ): Fluent
 	{
-		$this->segments[] = $type;
+		$this->segments[] = $model;
 		return $this;
 	}
 
@@ -211,17 +210,17 @@ class Fluent
 	/**
 	 * @return bool
 	 */
-	protected function shouldHandlePagination( string $name, array $arguments ): bool
+	protected function shouldHandleModel( string $name, array $arguments ): bool
 	{
-		return in_array( $name, static::PAGINATION ) && count( $arguments ) === 1;
+		return in_array( $name, static::MODELS ) && count( $arguments ) === 0;
 	}
 
 	/**
 	 * @return bool
 	 */
-	protected function shouldHandleType( string $name, array $arguments ): bool
+	protected function shouldHandlePagination( string $name, array $arguments ): bool
 	{
-		return in_array( $name, static::TYPES ) && count( $arguments ) === 0;
+		return in_array( $name, static::PAGINATION ) && count( $arguments ) === 1;
 	}
 
 	/**

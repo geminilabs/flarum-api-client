@@ -96,7 +96,7 @@ class Flarum
 		}
 		catch( RequestException $e ) {
 			$response = $e->getResponse();
-			if( !$response ) {
+			if( empty( $response )) {
 				return (object)['error' => $e->getMessage()];
 			}
 		}
