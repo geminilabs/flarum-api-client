@@ -96,6 +96,9 @@ class Flarum
 		}
 		catch( RequestException $e ) {
 			$response = $e->getResponse();
+			if( !$response ) {
+				return (object)['error' => $e->getMessage()];
+			}
 		}
 		if( floor( $response->getStatusCode() / 100 ) == 2 ) {
 			$this->resetFluent();
